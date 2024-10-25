@@ -1,5 +1,9 @@
-## Official Task List
-### Proposition: 
+This is our AI ATL 2024 Project. It's called `DiagnAI` representing `Diagnosis + AI`
+
+<img src="https://github.com/user-attachments/assets/04ee3227-27df-458e-8aec-6dca25b12330" alt="Logo" width="30%">
+
+
+## Proposition:
 We can complement doctors: Making their lives efficient.
 We can have patients get a better idea of their condition. A patient will only seek a doctor if they know something is wrong.
 The model can be a regular companion of the user and can detect if something is wrong with the user.
