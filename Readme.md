@@ -22,6 +22,9 @@ Regular therapies have a higher frequency than a therapist can provide.
 
 
 ## Execution:
+### Overall Pipeline:
+[https://drive.google.com/file/d/1jK0IOxRMGhGNMcbyg_SrlvSrELqekcUQ/view?usp=share_link](pipeline diagram)
+
 ### Dataset:
 Medically accurate corpus of data, focused on the real world medical practices. For example:
 - Real past therapies are practiced by real therapists
@@ -29,12 +32,8 @@ Medically accurate corpus of data, focused on the real world medical practices. 
 - Books and review papers
 
 ### Human Interaction:
-Real-time voice-to-voice interactions with RAG implemented with the new Claude Sonnet-3.5.
-
-The voice will mimic the real therapist(we will need to speak with doctors for it).
-
-### Overall Pipeline:
-[https://drive.google.com/file/d/1jK0IOxRMGhGNMcbyg_SrlvSrELqekcUQ/view?usp=share_link](pipeline diagram)
+- Real-time voice-to-voice interactions with RAG implemented with the new Claude Sonnet-3.5.
+- The voice will mimic the real therapist(we will need to speak with doctors for it<personal_question>).
 
 ### Performance Evaluation:
 - RAG evaluation library: giskard
