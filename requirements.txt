@@ -1,0 +1,5 @@
+chromadb
+voyageai
+dotenv
+typing
+logging
