@@ -14,6 +14,8 @@ class VectorStore:
         # Load environment variables
         load_dotenv()
         self.voyage_api_key = os.getenv("VOYAGE_API_KEY")
+        print(f"{self.voyage_api_key}")
+
         if not self.voyage_api_key:
             logger.error("VOYAGE_API_KEY not found in environment variables")
             raise ValueError("VOYAGE_API_KEY not found in environment variables")
@@ -47,7 +49,7 @@ class VectorStore:
         except Exception as e:
             logger.error(f"Error fetching embeddings: {str(e)}")
             raise
-
+            
     def add_documents(self, documents: List[str], metadata: List[Dict[str, Any]] = None, ids: List[str] = None) -> None:
         """Add documents to the vector store with optional metadata and IDs."""
         try:

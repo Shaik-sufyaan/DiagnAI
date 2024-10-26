@@ -3,8 +3,6 @@ import Embedding
 import Claude
 import os
 
-
-
 def call(Prompt):
     rag = Embedding.RAGSystem(api_key="your-api-key")
     
