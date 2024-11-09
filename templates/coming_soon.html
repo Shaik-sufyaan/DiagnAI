@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiagnAI - Coming Soon</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-image: url('/static/background.jpeg'); /* Ensure you have this image in the same directory */
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+            border-radius: 50%;
+            background-color: #333;
+            color: #fff;
+            font-size: 24px;
+            text-align: center;
+            line-height: 100px;
+        }
+        .heading {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .description {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 40px;
+        }
+        .countdown {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .form {
+            margin-top: 40px;
+        }
+        .form input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .form button[type="submit"] {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form button[type="submit"]:hover {
+            background-color: #3e8e41;
+        }
+        video {
+            width: 100%;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">DiagnAI</div>
+        <h1 class="heading">Coming Soon...</h1>
+        <p class="description">We're working hard to bring you the best AI-powered solutions. Stay tuned for our launch!</p>
+        
+        <video controls loop autoplay muted>
+            <source src="/static/A.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        
+        
+        <div class="countdown">
+            <span id="days">00</span> days
+            <span id="hours">00</span> hours
+            <span id="minutes">00</span> minutes
+            <span id="seconds">00</span> seconds
+        </div>
+        
+        <div class="form">
+            <input type="email" placeholder="Enter your email to be notified" required>
+            <button type="submit">Notify Me</button>
+        </div>
+    </div>
+
+    <script>
+        // Example countdown timer setup
+        const countdownDate = new Date("2024-12-01T23:59:59").getTime(); // Set your target date here
+
+        const x = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = countdownDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById("days").innerText = days;
+            document.getElementById("hours").innerText = hours;
+            document.getElementById("minutes").innerText = minutes;
+            document.getElementById("seconds").innerText = seconds;
+
+            // If the countdown is finished, write some text
+            if (distance < 0) {
+                clearInterval(x);
+                document.querySelector(".countdown").innerText = "We're live!";
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
