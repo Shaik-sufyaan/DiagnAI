@@ -13,8 +13,13 @@ def main():
     Voyage = r.VoyageEmbedding(voyage_api)
 
     # Load all PDF files from the "Case Study" directory
-    case_study_path = "../DataCorpus/Case Study/"
+    #case_study_path = "../DataCorpus/Case Study/"
+    case_study_path = r"C:\Users\sufya\OneDrive\Desktop\DiagnAI\DataCorpus\Case study"
+
+# Get all PDF files in the directory
     pdf_files = [os.path.join(case_study_path, f) for f in os.listdir(case_study_path) if f.endswith('.pdf')]
+
+    #pdf_files = [os.path.join(case_study_path, f) for f in os.listdir(case_study_path) if f.endswith('.pdf')]
     
     text_chunks = Voyage.document_load(pdf_paths=pdf_files)
     print(f"Text Chunks:\n{text_chunks}\n")
