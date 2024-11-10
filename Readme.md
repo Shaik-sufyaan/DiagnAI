@@ -20,6 +20,30 @@ We can take away the initial screening pressure from the medical industry so tha
 Regular therapies have a higher frequency than a therapist can provide.
 
 
+# Setup Instructions:
+There are some dependencies in requirements.txt that needs an older version of python: `3.12.7`
+- Make a virtual environment using that version of python using:
+```
+python3.12 -m venv DiagnEnv
+```
+- Activate that virtual environment:
+for macOS users:
+```
+source DiagnEnv/bin/activate
+```
+for Windows users:
+```
+source DiagnEnv/scripts/activate
+```
+- Install the dependencies in this virtual environment now:
+```
+pip install -r requirements.txt
+```
+- Create a file called `.env`, paste API keys for:
+  - Anthropic : `CLAUDE_KEY = "sk-a...`
+  - VoyageAI : `VOYAGE_API_KEY = "pa-a...` 
+
+
 
 ## Execution:
 ### Overall Pipeline:
