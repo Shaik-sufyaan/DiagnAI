@@ -1,4 +1,3 @@
-# databases.py
 from flask import session
 import random
 import sqlite3
@@ -9,6 +8,7 @@ class User:
         # Initialize database connections
         self.init_users_database()
         self.init_user_database()
+        self.session_data = {}
 
     def init_users_database(self):
         """Initialize the SQLite users.db database"""
@@ -78,14 +78,16 @@ class User:
         session["user_id"] = user['id']
         session["session_counter"] = session.get("session_counter", 0) + 1
 
-        session_data = {
+        self.session_data = {
             "session_id": session_id,
             "user_id": user['id'],
             "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "counter": session["session_counter"]
+            "counter": session["session_counter"],
+            "user":["Hi, I was looking for a good friend"],
+            "llm":["Hi how are you?"],
         }
 
-        return session_data
+        return self.session_data
 
     def init_user_database(self):
         """Initialize the main user database table - keeping original structure"""

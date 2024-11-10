@@ -8,17 +8,85 @@
 }
 
 body{
-    background-color: #c9d6ff;
-    background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+    font-family: 'Open Sans', sans-serif;
+    background-image: url('background.jpeg'); /* Ensure you have this image in the same directory */
+    /* background-color: #c9d6ff; */
+    /* background: linear-gradient(to right, #e2e2e2, #c9d6ff); */
+    background-size: cover;
+    background-position: center;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     height: 100vh;
+    margin: 0;
+}
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ddd;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form {
+    margin-top: 40px;
+}
+
+.form input[type="email"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 18px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.form button[type="submit"] {
+    background-color: #503aba;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.form button[type="submit"]:hover {
+    background-color: #320e80;
+}
+
+.logo {
+    width: 60%;
+    height: auto;
+    border-radius: 20%;
+    color: #fff;
+    justify-content: center;
+}
+
+video {
+    width: 30%;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.heading {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.description {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 40px;
 }
 
 .container{
-    background-color: #fff;
+    /* THIS IS FOR RIGHT SIDE OF THE LOGIN/SIGNUP CONTAINER */
+    /* background-color: #fff; */
+    background-color: rgba(255, 255, 255, .15);  
+    backdrop-filter: blur(5px);
     border-radius: 30px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
     position: relative;
@@ -28,15 +96,25 @@ body{
     min-height: 480px;
 }
 
+.container .countdown{
+    font-size: 28px;
+    /* font-weight: bold; */
+    margin-bottom: 20px;
+}
+.container .countdown span{
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+.container span{
+    font-size: 24px;
+}
+
 .container p{
     font-size: 14px;
     line-height: 20px;
     letter-spacing: 0.3px;
     margin: 20px 0;
-}
-
-.container span{
-    font-size: 12px;
 }
 
 .container a{
@@ -65,7 +143,8 @@ body{
     border-color: #fff;
 }
 
-.container form{
+.container .login form{
+    /* THIS IS FOR THE LEFT HALF OF THE SIGNUP/LOGIN */
     background-color: #fff;
     display: flex;
     align-items: center;

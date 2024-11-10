@@ -3,7 +3,14 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from Databases import User
 
+# RAG dependencies
+import rag as r
+import os
+from dotenv import load_dotenv
+
+
 app = Flask(__name__)
+load_dotenv()
 app.config['SECRET_KEY'] = 'your_secret_key'
 
 # Initialize User class
@@ -60,6 +67,47 @@ def login():
     else:
         flash('Invalid email or password. Please try again.')
         return redirect(url_for('index'))
+
+@app.route('/interact', methods=['GET', 'POST'])
+def interact():
+    # Initializing Rag & Embedding Space Objects:
+    rag_object = r.RAG(os.getenv("CLAUDE_KEY"))
+    voyage_object = r.VoyageEmbedding(os.getenv("VOYAGE_API_KEY"))
+    # Initilizing the string variables:
+    User_text, search_output, Previous_conversation = "", "", ""
+
+    # Form Interactions:
+    if request.method == 'POST':
+        # User's text input:
+        User_text = request.form.get("User_text")
+        # Vector Search:
+        search_output_list = voyage_object.hybrid_search(query=User_text, top_k=3)
+        search_output = search_output_list.join()
+        # Previous Conversations from the session_date:
+        user_history = user_manager.session_data["user"]
+        llm_history = user_manager.session_data["llm"]
+
+        length = len(llm_history)
+        for i in range(0,length):
+            Previous_conversation = [f"User: {user_history[i]} \nDiagnAI:{llm_history[i]}\n\n"]
+        Previous_conversation = Previous_conversation.join()     
+
+    # Send in the pipeline:
+    prompt = rag_object.generate_response(
+                    rag_object.final_wrapper_prompt(f"{search_output}",
+                   f"{User_text}",
+                   f"{Previous_conversation}"))
+
+    print(prompt)
+
+    # TODO – Parse the output:
+
+    # Show through the text output:
+    if 'user_id' not in session:
+        flash('Please log in first.')
+        return redirect(url_for('index'))
+    
+    return render_template('interact.html',response_text=prompt)
 
 @app.route('/coming_soon')
 def coming_soon():

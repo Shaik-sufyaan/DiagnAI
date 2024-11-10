@@ -53,6 +53,11 @@ class VoyageEmbedding:
         self.bm25 = BM25Okapi(self.tokenized_corpus)
         return chunks
 
+    def _tokenize(self, text: str) -> List[str]:
+        """Simple tokenization function."""
+        # Convert to lowercase and split on non-alphanumeric characters
+        return re.findall(r'\w+', text.lower())
+    
     def vectorize(self, texts: List[str]) -> List[List[float]]:
         """Convert text chunks to embeddings using VoyageAI."""
         embeddings = []
@@ -61,11 +66,6 @@ class VoyageEmbedding:
             embeddings.append(embedding)
         self.chunk_embeddings = embeddings
         return embeddings
-
-    def _tokenize(self, text: str) -> List[str]:
-        """Simple tokenization function."""
-        # Convert to lowercase and split on non-alphanumeric characters
-        return re.findall(r'\w+', text.lower())
 
     def hybrid_search(self, 
                      query: str, 
