@@ -45,9 +45,9 @@ pip install -r requirements.txt
 
 
 
-## Execution:
+# Execution:
 ### Overall Pipeline:
-[https://drive.google.com/file/d/1jK0IOxRMGhGNMcbyg_SrlvSrELqekcUQ/view?usp=share_link](pipeline diagram)
+[Click here to view the Pipeline Diagram](https://drive.google.com/file/d/1jK0IOxRMGhGNMcbyg_SrlvSrELqekcUQ/view?usp=share_link)
 
 ### Dataset:
 Medically accurate corpus of data, focused on the real world medical practices. For example:
