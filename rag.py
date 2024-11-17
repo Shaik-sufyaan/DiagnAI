@@ -18,6 +18,8 @@ from rank_bm25 import BM25Okapi
 import re
 from sklearn.preprocessing import normalize
 
+from langchain_community.llms.ollama import Ollama
+
 class VoyageEmbedding:
     def __init__(self, voyage_api_key: str) -> None:
         """Initialize VoyageAI embedding model."""

@@ -1,0 +1,232 @@
+/* Interact_style.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+:root {
+    --text-color: #E3E3E3;
+    --subheading-color: #828282;   
+    --placeholder-color: #a6a6a6;
+    --primary-color: #242424;
+    --secondary-color: #383838;
+    --secondary-hover-color: #444;
+}
+
+body{
+    font-family: 'Open Sans', sans-serif;
+    background-image: url('background.jpeg'); /* Ensure you have this image in the same directory */
+    /* background-color: #c9d6ff; */
+    /* background: linear-gradient(to right, #e2e2e2, #c9d6ff); */
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+}
+
+.header, .typing-area {
+    color: var(--text-color);
+}
+
+.header, .chat-list .message, .typing-form {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.header {
+   /* margin-top: 7vh; */
+    padding: 1rem;
+    display: none;              /* Space between suggestion and input box */
+}
+
+.header :where(.title, .subtitle) {
+    font-weight: 500;
+    line-height: 3.6rem;
+    
+}
+
+.header .title {
+    font-size: 2.7rem;
+    width: fit-content;
+    background-clip: text;
+    background: linear-gradient(to right, #d5e036, #a6e72c
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header .subtitle {
+    font-size: 2.4rem;
+    color: #d5e036;
+}
+
+.suggestion-list {
+    margin-top: 9.5vh;
+    list-style: none;
+    display: flex;
+    gap: 1.25rem;
+    overflow-x:auto;
+    scrollbar-width: none;
+}
+.suggestion-list .suggestion {
+    padding: 1.25rem;
+    cursor: pointer;
+    width: 227px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;     /*To move the icons */
+    align-items: flex-end;
+    justify-content: space-between;
+    border-radius: 1rem;
+    background-color: var(--subheading-color);
+}
+
+.suggestion-list .suggestion:hover {
+    background-color: rgb(5, 48, 48);
+}
+
+.suggestion-list .suggestion .text {
+    font-weight: 400;
+}
+
+.suggestion-list .suggestion .icon {
+    height: 42px;
+    width: 42px;
+    font-size: 1.3rem;
+    margin-top: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--primary-color);
+}
+
+.chat-list {
+    padding: 2rem 0rem 12rem;
+    max-height: 100vh;
+    overflow-y: auto;
+}
+
+.chat-list .message.incoming{
+    margin-top: 1.5rem;
+}
+
+.chat-list .message .message-content {
+    display: flex;
+    gap: 1.5rem;
+    width: 100%;
+    align-items: center;
+}
+
+
+.chat-list .message .avatar {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+    align-self: flex-start;
+}
+
+.chat-list .message .text {
+    color: #fff;
+}
+
+.chat-list .message .icon{
+    height: 35px;
+    width: 35px;
+    display: flex;
+    cursor: pointer;
+    font-size: 1.25rem;
+    margin-left: 3.5rem;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+   /* background: var(--secondary-color); */
+    color: #fff;
+     visibility: hidden; 
+}
+
+.chat-list .message:hover .icon {
+    visibility: visible;
+}
+
+.chat-list .message .icon:hover {
+    background: none;
+}
+.typing-area {
+    position: fixed;
+    width: 100%;
+    bottom: 0%;
+    padding: 1rem;
+    /* background: var(--primary-color); */
+}
+
+.typing-area .input-wrapper {
+    height: 56px;
+    width: 100%;
+    display: flex;
+    position: relative;
+}
+
+.typing-area :where(.typing-form, .action-button) {
+    display: flex;
+    gap: 0.50rem;
+}
+
+.typing-area .typing-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    color: var(--text-color);
+    border-radius: 6.2rem;
+    padding: 1.1rem 4rem 1.1rem 1.5rem;
+    background: var(--secondary-color);
+}
+
+.typing-area .icon {
+    height: 56px;
+    width: 56px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--secondary-color);
+}
+
+.typing-area .icon:hover {
+    background: var(--secondary-hover-color) !important;
+}
+
+.typing-area .input-wrapper .icon {
+    position: absolute;
+    right: 0;
+    outline: none;                  /* enter button */
+    border: none;
+    background: none;
+    color: var(--text-color);
+    transform: scale(0);            /* it hides enter button */
+    transition: transform 0.2s ease; /* enter button transition */
+}
+
+.typing-area .input-wrapper .typing-input:valid ~ .icon {
+    transform: scale(1);
+}
+.typing-area .disclaimer-text {         /* as name suggests disclaimer text */
+    font-size: 0.85rem;
+    margin-top: 1rem;
+    text-align: center;     
+    color: var(--placeholder-color);
+}
+
+
