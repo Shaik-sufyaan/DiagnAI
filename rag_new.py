@@ -18,9 +18,7 @@ from rank_bm25 import BM25Okapi
 import re
 from sklearn.preprocessing import normalize
 
-from langchain_community.llms.ollama import Ollama
-
-class VoyageEmbedding:
+class Data_Handler:
     def __init__(self, voyage_api_key: str) -> None:
         """Initialize VoyageAI embedding model."""
         self.voyage_api_key = voyage_api_key
@@ -35,9 +33,37 @@ class VoyageEmbedding:
         self.chunk_embeddings = []
         self.bm25 = None
         self.tokenized_corpus = None
-
-    def document_load(self, pdf_paths: List[str]) -> List[str]:
+        self.text_database_path = None
+        self.vector_database_path = None
+        self.collection_size = None
+    
+    ################## TEXT DATABASE HANDLING ##################
+    def _get_all_pdf_recursive(self, directory):
+        all_files = []
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                if file.lower().endswith('.pdf') or file.lower().endswith('.txt'):
+                    all_files.append(os.path.join(root, file))
+        return all_files
+    
+    def _tokenize(self, text: str) -> List[str]:
+        """Simple tokenization function."""
+        # Convert to lowercase and split on non-alphanumeric characters
+        return re.findall(r'\w+', text.lower())
+    
+    def _vectorize(self, texts: List[str]) -> List[List[float]]:
+        """Convert text chunks to embeddings using VoyageAI."""
+        embeddings = []
+        for chunk in texts:
+            embedding = self.embedding_model.encode(chunk)
+            embeddings.append(embedding)
+        self.chunk_embeddings = embeddings
+        return embeddings
+    
+    def document_load(self, text_database_path: str) -> List[List[float]]:
+        self.text_database_path = text_database_path
         """Load and chunk PDF documents using LangChain's tools."""
+        pdf_paths = self._get_all_pdf_recursive(self.text_database_path)
         chunks = []
         for pdf_path in pdf_paths:
             try:
@@ -50,24 +76,45 @@ class VoyageEmbedding:
                 print(f"Error loading {pdf_path}: {e}")
         
         self.text_chunks = chunks
+        self.vector_chunks = self._vectorize(self.text_chunks)
         # Initialize BM25 for lexical search
         self.tokenized_corpus = [self._tokenize(chunk) for chunk in chunks]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
         return chunks
 
-    def _tokenize(self, text: str) -> List[str]:
-        """Simple tokenization function."""
-        # Convert to lowercase and split on non-alphanumeric characters
-        return re.findall(r'\w+', text.lower())
+    ################## VECTOR DATABASE HANDLING ##################
+    def create_vector_db(self, persistant_directory, collection_name="MedDB"):
+        """Initialize ChromaDB with persistence using PersistentClient."""
+        self.vector_database_path = persistant_directory
+        # Ensure the directory exists or create it
+        if not os.path.exists(self.vector_database_path):
+            os.makedirs(self.vector_database_path)
+            print(f"Directory '{self.vector_database_path}' created.")
+        
+        # Initialize PersistentClient with the vector_database_path
+        self.client = PersistentClient(path=self.vector_database_path)
+        self.collection_name = collection_name
+        # self.collection = self.create_vector_db()  # Ensure collection initialization
+        
+        """Create or get an existing collection for vector storage."""
+        print(f"Creating or accessing collection '{self.collection_name}'")
+        self.collection_size = self.client.get_collection(f"{self.collection_name}").count()
+        return self.client.get_or_create_collection(name=self.collection_name)
     
-    def vectorize(self, texts: List[str]) -> List[List[float]]:
-        """Convert text chunks to embeddings using VoyageAI."""
-        embeddings = []
-        for chunk in texts:
-            embedding = self.embedding_model.encode(chunk)
-            embeddings.append(embedding)
-        self.chunk_embeddings = embeddings
-        return embeddings
+    def append(self, embedding: List[float], doc_id: str, metadata: Dict = None) -> None:
+            """Append new embedding with document ID to the collection."""
+            if not hasattr(self, 'collection') or self.collection is None:
+                raise ValueError("Collection not initialized. Please run create_vector_db first.")
+            
+            # Convert embedding to list if it's not already
+            if not isinstance(embedding, list):
+                embedding = embedding.tolist()
+                
+            self.collection.add(
+                embeddings=[embedding],
+                ids=[doc_id],
+                metadatas=[metadata] if metadata else None
+            )
 
     def hybrid_search(self, 
                      query: str, 
@@ -75,8 +122,7 @@ class VoyageEmbedding:
                      semantic_weight: float = 0.7
                      ) -> List[Dict[str, any]]:
         """
-        Perform hybrid search combining semantic and lexical search.
-        
+        Hybrid search combining semantic and lexical search.
         Args:
             query: Text query to search for
             top_k: Number of results to return
@@ -121,6 +167,24 @@ class VoyageEmbedding:
         
         return results
 
+    def semantic_search(self, query_embedding: List[float], n_results: int = 3) -> List[Dict[str, Any]]:
+        """Perform semantic search using query embedding."""
+        if not hasattr(self, 'collection') or self.collection is None:
+            raise ValueError("Collection not initialized. Please run create_vector_db first.")
+        
+        # Convert query_embedding to list if it's not already
+        if not isinstance(query_embedding, list):
+            query_embedding = query_embedding.tolist()
+
+        results = self.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=n_results,
+            include=["embeddings", "distances", "metadatas"]
+        )
+        return results
+    
+
+    ################## VECTORS TO TEXT ##################
     def embedding_to_text(self, 
                          embedding: np.ndarray, 
                          top_k: int = 1, 
@@ -129,7 +193,6 @@ class VoyageEmbedding:
                          ) -> List[Dict[str, any]]:
         """
         Convert an embedding vector to the most similar text(s).
-        
         Args:
             embedding: The embedding vector
             top_k: Number of results to return
@@ -155,97 +218,11 @@ class VoyageEmbedding:
                     "text": self.text_chunks[idx],
                     "similarity_score": float(score)
                 })
+        if not results[0]:
+            return ["Results from the medical corpus = Not really sure!"]
         
         return results
-
-################################ SIMPLER VERSION: ################################
-# class VoyageEmbedding:        # WORKS !
-#     def __init__(self, voyage_api_key: str) -> None:            
-#         """Initialize VoyageAI embedding model."""
-#         self.voyage_api_key = voyage_api_key
-#         # self.embedding_model = VoyageAIEmbeddings(voyage_api_key=voyage_api_key, model = "")  # DOES NOT HAVE ANY MODEL 
-#         self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-#         self.text_splitter = RecursiveCharacterTextSplitter(
-#             chunk_size=1000,
-#             chunk_overlap=100,
-#             length_function=len,
-#             separators=["\n\n", "\n", " ", ""]
-#         )
     
-#     def document_load(self, pdf_paths: List[str]) -> List[str]: # WORKS !
-#         """Load and chunk PDF documents using LangChain's tools."""
-#         chunks = []
-#         for pdf_path in pdf_paths:
-#             try:
-#                 loader = PyPDFLoader(pdf_path)
-#                 pages = loader.load()
-#                 for page in pages:
-#                     page_chunks = self.text_splitter.split_text(page.page_content)
-#                     chunks.extend(page_chunks)
-#             except Exception as e:
-#                 print(f"Error loading {pdf_path}: {e}")
-#         return chunks
-
-
-#     def vectorize(self, texts: List[str]) -> List[List[float]]: # WORKS !
-#         """Convert text chunks to embeddings using VoyageAI."""
-#         embeddings = []
-#         for chunk in texts:
-#             embedding = self.embedding_model.encode(chunk)
-#             embeddings.append(embedding)
-#         return embeddings
-############################################################################
-
-class VectorDB:                                                 # WORKS !
-    def __init__(self, persist_directory: str) -> None:
-        """Initialize ChromaDB with persistence using PersistentClient."""
-        # Ensure the directory exists or create it
-        if not os.path.exists(persist_directory):
-            os.makedirs(persist_directory)
-            print(f"Directory '{persist_directory}' created.")
-        
-        # Initialize PersistentClient with the persist_directory
-        self.client = PersistentClient(path=persist_directory)
-        self.collection_name = "Med_DB"
-        self.collection = self.create_vector_db()  # Ensure collection initialization
-
-    def create_vector_db(self):
-        """Create or get an existing collection for vector storage."""
-        print(f"Creating or accessing collection '{self.collection_name}'")
-        return self.client.get_or_create_collection(name=self.collection_name)
-
-    def append(self, embedding: List[float], doc_id: str, metadata: Dict = None) -> None:
-        """Append new embedding with document ID to the collection."""
-        if not hasattr(self, 'collection') or self.collection is None:
-            raise ValueError("Collection not initialized. Please run create_vector_db first.")
-        
-        # Convert embedding to list if it's not already
-        if not isinstance(embedding, list):
-            embedding = embedding.tolist()
-            
-        self.collection.add(
-            embeddings=[embedding],
-            ids=[doc_id],
-            metadatas=[metadata] if metadata else None
-        )
-
-    def semantic_search(self, query_embedding: List[float], n_results: int = 3) -> List[Dict[str, Any]]:
-        """Perform semantic search using query embedding."""
-        if not hasattr(self, 'collection') or self.collection is None:
-            raise ValueError("Collection not initialized. Please run create_vector_db first.")
-        
-        # Convert query_embedding to list if it's not already
-        if not isinstance(query_embedding, list):
-            query_embedding = query_embedding.tolist()
-
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results,
-            include=["embeddings", "distances", "metadatas"]
-        )
-        return results
-
-
 class RAG:
     def __init__(self, anthropic_api_key: str) -> None:
         """Initialize RAG system with Anthropic API."""
