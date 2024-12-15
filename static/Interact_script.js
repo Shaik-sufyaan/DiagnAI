@@ -1,9 +1,14 @@
+require('dotenv').config();
+
 const typingForm = document.querySelector(".typing-form");
 const chatList = document.querySelector(".chat-list");
 let userMessage = null;
 
-const YOUR_API_KEY = "AIzaSyDmv-PERaSug-_qNCm6pDUcKYZSl3qaqPQ";
+
+const YOUR_API_KEY = process.env.G_API_KEY;
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${YOUR_API_KEY}`;
+
+console.log(API_URL);
 
 // Create a new message element and return it
 const createMessageElement = (content, className) => {
