@@ -1,14 +1,39 @@
-require('dotenv').config();
-
 const typingForm = document.querySelector(".typing-form");
 const chatList = document.querySelector(".chat-list");
 let userMessage = null;
+let API_URL = ""; // Dynamically set later
 
+// Fetch API key securely from Flask backend
+const fetchApiKey = async () => {
+    try {
+        const response = await fetch('/get_api_key');
+        const data = await response.json();
+        if (data.api_key) {
+            return data.api_key;
+        } else {
+            console.error("API key not returned:", data.error);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error fetching API key:", error);
+        return null;
+    }
+};
 
-const YOUR_API_KEY = process.env.G_API_KEY;
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${YOUR_API_KEY}`;
+// Initialize API URL dynamically
+const initializeApiUrl = async () => {
+    const apiKey = await fetchApiKey();
+    if (apiKey) {
+        API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        console.log("API URL initialized:", API_URL);
+    } else {
+        console.error("Failed to fetch API key");
+    }
+};
 
-console.log(API_URL);
+// Call the function to initialize the API URL when the page loads
+initializeApiUrl();
+
 
 // Create a new message element and return it
 const createMessageElement = (content, className) => {
