@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from Databases import User
 
@@ -7,6 +7,7 @@ from Databases import User
 import rag as r
 import os
 from dotenv import load_dotenv
+
 
 
 app = Flask(__name__)
@@ -20,6 +21,19 @@ user_manager = User()
 def index():
     return render_template('index.html')
 
+@app.route('/get_api_key', methods=['GET'])
+def get_api_key():
+    # Only return the API key if the user is logged in
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Retrieve the API key from environment variables
+    api_key = os.getenv('G_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'API key not configured'}), 500
+    
+    return jsonify({'api_key': api_key})
+    
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
