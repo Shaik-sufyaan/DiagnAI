@@ -46,20 +46,6 @@ class Data_Handler:
                     all_files.append(os.path.join(root, file))
         return all_files
     
-    def _tokenize(self, text: str) -> List[str]:
-        """Simple tokenization function."""
-        # Convert to lowercase and split on non-alphanumeric characters
-        return re.findall(r'\w+', text.lower())
-    
-    def _vectorize(self, texts: List[str]) -> List[List[float]]:
-        """Convert text chunks to embeddings using VoyageAI."""
-        embeddings = []
-        for chunk in texts:
-            embedding = self.embedding_model.encode(chunk)
-            embeddings.append(embedding)
-        self.chunk_embeddings = embeddings
-        return embeddings
-    
     def document_load(self, text_database_path: str) -> List[List[float]]:
         self.text_database_path = text_database_path
         """Load and chunk PDF documents using LangChain's tools."""
@@ -81,6 +67,21 @@ class Data_Handler:
         self.tokenized_corpus = [self._tokenize(chunk) for chunk in chunks]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
         return chunks
+    
+    def _tokenize(self, text: str) -> List[str]:
+        """Simple tokenization function."""
+        # Convert to lowercase and split on non-alphanumeric characters
+        return re.findall(r'\w+', text.lower())
+    
+    def _vectorize(self, texts: List[str]) -> List[List[float]]:
+        """Convert text chunks to embeddings using VoyageAI."""
+        embeddings = []
+        for chunk in texts:
+            embedding = self.embedding_model.encode(chunk)
+            embeddings.append(embedding)
+        self.chunk_embeddings = embeddings
+        return embeddings
+    
 
     ################## VECTOR DATABASE HANDLING ##################
     def create_vector_db(self, persistant_directory, collection_name="MedDB"):
