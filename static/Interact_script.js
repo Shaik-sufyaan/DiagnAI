@@ -167,7 +167,7 @@ const testAPIConnection = async () => {
 };
 
 // Add these utility functions at the top of your script
-const typeText = async (element, text, speed = 30) => {
+const typeText = async (element, text, speed = 40) => {
     element.innerHTML = '';
     let index = 0;
     

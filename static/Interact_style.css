@@ -122,6 +122,7 @@ body{
 
 .chat-list::-webkit-scrollbar {
     display: none;
+    
 }
 
 /* Update message styling to align with typing area */
@@ -131,6 +132,9 @@ body{
     opacity: 0;
     transform: translateY(20px);
     animation: fadeInUp 0.3s ease forwards;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    
 }
 
 .chat-list .message.incoming{
