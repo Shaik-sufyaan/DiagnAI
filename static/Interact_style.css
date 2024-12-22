@@ -42,9 +42,12 @@ body{
 }
 
 .header {
-   /* margin-top: 7vh; */
     padding: 1rem;
-    display: none;              /* Space between suggestion and input box */
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 .header :where(.title, .subtitle) {
@@ -75,6 +78,8 @@ body{
     gap: 1.25rem;
     overflow-x:auto;
     scrollbar-width: none;
+    display: none; /* This hides the suggestion boxes */
+
 }
 .suggestion-list .suggestion {
     padding: 1.25rem;

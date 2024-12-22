@@ -167,7 +167,7 @@ const testAPIConnection = async () => {
 };
 
 // Add these utility functions at the top of your script
-const typeText = async (element, text, speed = 40) => {
+const typeText = async (element, text, speed = 25) => {
     element.innerHTML = '';
     let index = 0;
     
@@ -195,8 +195,20 @@ const scrollToBottom = (element, smooth = true) => {
 
 // Add styles to maintain smooth animations
 const styleSheet = document.createElement("style");
-
 document.head.appendChild(styleSheet);
+
+// suggestion list
+document.querySelectorAll('.suggestion').forEach(suggestion => {
+    suggestion.addEventListener('click', () => {
+        const text = suggestion.querySelector('.text').textContent;
+        const inputField = document.querySelector('.typing-input');
+        inputField.value = text;
+        
+        // Optional: Automatically submit the suggestion
+        const form = document.querySelector('.typing-form');
+        form.dispatchEvent(new Event('submit'));
+    });
+});
 
 
 // Test the API connection when the page loads
