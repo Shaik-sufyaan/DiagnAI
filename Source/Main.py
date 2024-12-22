@@ -8,10 +8,14 @@ import rag as r
 import os
 from dotenv import load_dotenv
 
-app = Flask(
-    __name__,
-    template_folder=r"C:\Users\sufya\OneDrive\Desktop\DiagnAI\templates"
-)  # Specify the absolute path to templates
+template_dir = r'C:\Users\sufya\OneDrive\Desktop\DiagnAI\templates'
+static_dir = r'C:\Users\sufya\OneDrive\Desktop\DiagnAI\static'
+
+
+app = Flask(__name__,
+            template_folder=template_dir,
+            static_folder=static_dir)
+
 
 load_dotenv()
 app.config['SECRET_KEY'] = 'your_secret_key'
