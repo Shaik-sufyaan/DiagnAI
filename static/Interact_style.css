@@ -113,6 +113,24 @@ body{
     padding: 2rem 0rem 12rem;
     max-height: 100vh;
     overflow-y: auto;
+    width: 100%;
+    max-width: 1000px; /* Match the max-width of header and typing form */
+    margin: 0 auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.chat-list::-webkit-scrollbar {
+    display: none;
+}
+
+/* Update message styling to align with typing area */
+.chat-list .message {
+    padding: 0 1rem; /* Add horizontal padding to match typing area */
+    margin-bottom: 1rem; 
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.3s ease forwards;
 }
 
 .chat-list .message.incoming{
@@ -123,6 +141,8 @@ body{
     display: flex;
     gap: 1.5rem;
     width: 100%;
+    max-width: 1000px; /* Match the max-width of typing area */
+    margin: 0 auto;
     align-items: center;
 }
 
@@ -137,6 +157,8 @@ body{
 
 .chat-list .message .text {
     color: #fff;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .chat-list .message .icon{
@@ -161,6 +183,7 @@ body{
 .chat-list .message .icon:hover {
     background: none;
 }
+
 .typing-area {
     position: fixed;
     width: 100%;
@@ -169,16 +192,34 @@ body{
     /* background: var(--primary-color); */
 }
 
-.typing-area .input-wrapper {
+.typing-area .typing-form {
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+    /* padding: 0 1rem; */
+}
+
+
+ .typing-area .input-wrapper {
     height: 56px;
     width: 100%;
     display: flex;
     position: relative;
-}
+} 
 
 .typing-area :where(.typing-form, .action-button) {
     display: flex;
     gap: 0.50rem;
+}
+
+.action-button {
+    flex-shrink: 0; /* Prevents action buttons from affecting input width */
+}
+
+.typing-form {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .typing-area .typing-input {
@@ -229,4 +270,10 @@ body{
     color: var(--placeholder-color);
 }
 
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 

@@ -3,6 +3,7 @@ const chatList = document.querySelector(".chat-list");
 let userMessage = null;
 let API_URL = ""; // Dynamically set later
 
+
 // Fetch API key securely from Flask backend
 const fetchApiKey = async () => {
     try {
@@ -44,6 +45,7 @@ const createMessageElement = (content, className) => {
 };
 
 // Fetch response from the API based on the user's message
+// Update the generateAPIResponse function
 const generateAPIResponse = async (incomingMessageDiv) => {
     const textElement = incomingMessageDiv.querySelector(".text");
 
@@ -54,7 +56,6 @@ const generateAPIResponse = async (incomingMessageDiv) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                // Updated request format for Gemini
                 contents: [{
                     role: "user",
                     parts: [{
@@ -75,12 +76,12 @@ const generateAPIResponse = async (incomingMessageDiv) => {
         }
 
         const data = await response.json();
-        console.log('API Response:', data); // For debugging
-
-        // Updated response parsing for Gemini
+        
         if (data.candidates && data.candidates[0] && data.candidates[0].content) {
             const apiResponse = data.candidates[0].content.parts[0].text;
-            textElement.innerText = apiResponse || "No response text received.";
+            textElement.innerHTML = ''; // Clear the "Thinking..." text
+            await typeText(textElement, apiResponse);
+            scrollToBottom(chatList);
         } else {
             textElement.innerText = "Received unexpected response format from API.";
             console.error('Unexpected response structure:', data);
@@ -109,6 +110,7 @@ const showLoadingAnimation = () => {
 };
 
 // Handle outgoing chat message
+// Update the handleOutgoingChat function
 const handleOutgoingChat = () => {
     userMessage = typingForm.querySelector(".typing-input").value.trim();
     if (!userMessage) return;
@@ -122,6 +124,7 @@ const handleOutgoingChat = () => {
     
     const outgoingMessageDiv = createMessageElement(html, "outgoing");
     chatList.appendChild(outgoingMessageDiv);
+    scrollToBottom(chatList);
 
     typingForm.querySelector(".typing-input").value = "";
     showLoadingAnimation();
@@ -162,6 +165,39 @@ const testAPIConnection = async () => {
         console.error('API Test Error:', error);
     }
 };
+
+// Add these utility functions at the top of your script
+const typeText = async (element, text, speed = 30) => {
+    element.innerHTML = '';
+    let index = 0;
+    
+    return new Promise((resolve) => {
+        function addCharacter() {
+            if (index < text.length) {
+                element.innerHTML += text.charAt(index);
+                index++;
+                setTimeout(addCharacter, speed);
+            } else {
+                resolve();
+            }
+        }
+        addCharacter();
+    });
+};
+
+const scrollToBottom = (element, smooth = true) => {
+    const options = {
+        top: element.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto'
+    };
+    element.scrollTo(options);
+};
+
+// Add styles to maintain smooth animations
+const styleSheet = document.createElement("style");
+
+document.head.appendChild(styleSheet);
+
 
 // Test the API connection when the page loads
 testAPIConnection();
