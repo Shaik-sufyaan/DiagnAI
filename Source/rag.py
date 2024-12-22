@@ -18,6 +18,11 @@ from rank_bm25 import BM25Okapi
 import re
 from sklearn.preprocessing import normalize
 
+import google.generativeai as genai
+
+# Load environment variables from the .env file
+os.load_dotenv()
+
 class Data_Handler:
     def __init__(self, voyage_api_key: str) -> None:
         """Initialize VoyageAI embedding model."""
@@ -81,7 +86,7 @@ class Data_Handler:
         self.tokenized_corpus = [self._tokenize(chunk) for chunk in chunks]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
         return chunks
-
+    
     ################## VECTOR DATABASE HANDLING ##################
     def create_vector_db(self, persistant_directory, collection_name="MedDB"):
         """Initialize ChromaDB with persistence using PersistentClient."""
@@ -100,7 +105,7 @@ class Data_Handler:
         print(f"Creating or accessing collection '{self.collection_name}'")
         self.collection_size = self.client.get_collection(f"{self.collection_name}").count()
         return self.client.get_or_create_collection(name=self.collection_name)
-    
+
     def append(self, embedding: List[float], doc_id: str, metadata: Dict = None) -> None:
             """Append new embedding with document ID to the collection."""
             if not hasattr(self, 'collection') or self.collection is None:
@@ -109,7 +114,7 @@ class Data_Handler:
             # Convert embedding to list if it's not already
             if not isinstance(embedding, list):
                 embedding = embedding.tolist()
-                
+
             self.collection.add(
                 embeddings=[embedding],
                 ids=[doc_id],
@@ -224,10 +229,16 @@ class Data_Handler:
         return results
     
 class RAG:
-    def __init__(self, anthropic_api_key: str) -> None:
+    def __init__(self, api_key: str) -> None:
         """Initialize RAG system with Anthropic API."""
-        self.client = Anthropic(api_key=anthropic_api_key)
-        self.model = "claude-3-5-sonnet-20241022"   # Latest model
+        self.api_key = api_key
+        
+        self.claude_model = "claude-3-5-sonnet-20241022"   # Latest model
+        self.gemini_model = "gemini-1.5-flash"
+
+        # Model Choices:
+        self.claude_models = ["claude-3-5-sonnet-20241022"]
+        self.gemini_models = ["gemini-1.5-flash", "gemini-pro"]
     
 
     def final_wrapper_prompt(self, context: str, query: str, conversation_history: str="", user_tonality: str="") -> str:
@@ -344,21 +355,11 @@ class RAG:
                     </conversation_history>
 
                     Remember, your primary goal is to be a supportive friend while subtly guiding the conversation towards health-related topics when appropriate."""
-        
-    # def final_wrapper_prompt(self, context: str, user_tonality: str, query: str) -> str:
-    #     """Create final wrapper prompt combining context and user query."""
-    #     return f"""Based on the following context and considering the user's 
-    #     emotional tone [{user_tonality}], please respond to this query:
-        
-    #     Context: {context}
-    #     Query: {query}
-        
-    #     Provide a response that addresses the query while maintaining appropriate 
-    #     emotional resonance."""
     
-    def generate_response(self, prompt: str) -> str:
+    def generate_response_claude(self, prompt: str) -> str:
         """Generate response using Claude 3 Sonnet."""
         try:
+            self.client = Anthropic(api_key=self.api_key)
             message = self.client.messages.create(
                 model=self.model,
                 max_tokens=1000,
@@ -374,3 +375,11 @@ class RAG:
         except Exception as e:
             print(f"Error generating response: {str(e)}")
             return "Completion"
+
+    def generate_response_gemini(self, prompt: str) -> str:
+        genai.configure(api_key=self.api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+        print(response.text)
+        return response
+    

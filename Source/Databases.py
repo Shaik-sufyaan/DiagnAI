@@ -130,6 +130,40 @@ class User:
             cursor.close()
             conn.close()
 
+    def extract_user_database(self, user_id, session_id):
+        conn = sqlite3.connect('Main.db')
+        cursor = conn.cursor()
+        
+        conversations_table = f"Table_{user_id}_conversations"
+        health_data_table = f"Table_{user_id}_health_data"
+
+        # select * from table conversations_table:
+        cursor.execute(f"""
+            SELECT * FROM {conversations_table}
+        """)
+        rows = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+        output1 = ""
+        for col_index, col_name in enumerate(columns):
+            output1 += (f"{col_name}:")
+            for row in rows:
+                output1 += f"  {row[col_index]}, "[:-2]
+        
+        # select * from table health_data_table:
+        cursor.execute(f"""
+            SELECT * FROM {health_data_table}
+        """)
+        rows = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+        output2 = ""
+        for col_index, col_name in enumerate(columns):
+            output2 += (f"{col_name}:")
+            for row in rows:
+                output2 += f"  {row[col_index]}, "[:-2] 
+
+        user_data = f"Previous Conversations: {output1}\n\n\n\n\n\n\n Health Data:{output2}"
+        return user_data
+
     def create_user_specific_tables(self, user_id, session_id):
         """Create user-specific tables - keeping original structure"""
         conn = sqlite3.connect('Main.db')
@@ -148,11 +182,65 @@ class User:
             """)
             
             # Create health data table with original structure
+            # cursor.execute(f"""
+            #     CREATE TABLE IF NOT EXISTS {table_name_health_data} (
+            #         health_parameters TEXT,
+            #         social_parameters TEXT,
+            #         environmental_parameters TEXT
+            #     )
+            # """)
             cursor.execute(f"""
                 CREATE TABLE IF NOT EXISTS {table_name_health_data} (
-                    health_parameters TEXT,
-                    social_parameters TEXT,
-                    environmental_parameters TEXT
+                    ID INT PRIMARY KEY AUTO_INCREMENT, -- Unique identifier for each entry
+                    Name VARCHAR(100),
+                    Age INT,
+                    Sex VARCHAR(10),
+                    Ethnicity VARCHAR(100),
+                    
+                    SavedConversations TEXT,
+                    ImportantDataRichConversations TEXT,
+                    Logic VARCHAR(100),
+                    DataExtractedFromPreviousSessions TEXT,
+                    
+                    SocialParameters_IncomeStatus VARCHAR(100),
+                    SocialParameters_WorkLife VARCHAR(100),
+                    SocialParameters_EducationalBackground VARCHAR(100),
+                    SocialParameters_FamilyStatus VARCHAR(100),
+                    SocialParameters_MaritalStatus VARCHAR(100),
+                    SocialParameters_Children VARCHAR(100),
+                    SocialParameters_Hobbies TEXT,
+                    SocialParameters_FuturePlans TEXT,
+                    SocialParameters_LivingEnvironment TEXT,
+                    SocialParameters_SupportNetwork TEXT,
+                    SocialParameters_CulturalBackground TEXT,
+                    SocialParameters_OccupationType VARCHAR(100),
+                    SocialParameters_FinancialStability VARCHAR(100),
+                    SocialParameters_DailyRoutine TEXT,
+                    
+                    HealthParameters_HealthHistory TEXT,
+                    HealthParameters_RecentHealthProblems TEXT,
+                    HealthParameters_FamilyHealthRecord TEXT,
+                    HealthParameters_Diet TEXT,
+                    HealthParameters_ExerciseRoutine TEXT,
+                    HealthParameters_MentalHealthHistory TEXT,
+                    HealthParameters_SleepPatterns TEXT,
+                    HealthParameters_MedicationAndSupplementUse TEXT,
+                    HealthParameters_SubstanceUse TEXT,
+                    HealthParameters_AllergiesAndSensitivities TEXT,
+                    HealthParameters_ImmunizationStatus TEXT,
+                    HealthParameters_SurgicalHistory TEXT,
+                    HealthParameters_ChronicConditions TEXT,
+                    HealthParameters_GeneticFactors TEXT,
+                    HealthParameters_ReproductiveHealth TEXT,
+                    HealthParameters_PainManagement TEXT,
+                    HealthParameters_HydrationHabits TEXT,
+                    HealthParameters_MobilityAndFunctionalLimitations TEXT,
+                    
+                    EnvironmentalParameters_LivingEnvironment TEXT,
+                    EnvironmentalParameters_ClimateExposure TEXT,
+                    EnvironmentalParameters_WorkplaceEnvironment TEXT,
+                    EnvironmentalParameters_AccessToHealthcare TEXT,
+                    EnvironmentalParameters_FoodAndWaterQuality TEXT
                 )
             """)
             

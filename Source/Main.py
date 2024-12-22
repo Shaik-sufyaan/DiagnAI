@@ -51,7 +51,7 @@ def register():
             hashed_password = generate_password_hash(password)
             new_user = user_manager.create_user(name, email, hashed_password)
 
-            # Create session immediately after registration
+            # Create session dictionary immediately after registration"
             session_data = user_manager.create_session(new_user)
             
             # Register in main database and create user-specific tables
@@ -74,10 +74,10 @@ def login():
 
     user = user_manager.get_user_by_email(email)
     if user and check_password_hash(user['password'], password):
-        # Create session immediately upon successful login
-        session_data = user_manager.create_session(user)
+        # Create session dictionary immediately upon successful login
+        session_data_login = user_manager.create_session(user)
         flash(f"Welcome {user['name']}! Session started.")
-        return redirect(url_for('coming_soon', session_id=session_data["session_id"]))
+        return redirect(url_for('coming_soon', session_id=session_data_login["session_id"]))
     else:
         flash('Invalid email or password. Please try again.')
         return redirect(url_for('index'))
@@ -85,8 +85,8 @@ def login():
 @app.route('/interact', methods=['GET', 'POST'])
 def interact():
     # Initializing Rag & Embedding Space Objects:
-    rag_object = r.RAG(os.getenv("CLAUDE_KEY"))
-    voyage_object = r.VoyageEmbedding(os.getenv("VOYAGE_API_KEY"))
+    rag_object = r.RAG(os.getenv("GEMINI_API_KEY"))
+    rag_data = r.Data_Handler(os.getenv("VOYAGE_API_KEY"))
     # Initilizing the string variables:
     User_text, search_output, Previous_conversation = "", "", ""
 
@@ -95,7 +95,7 @@ def interact():
         # User's text input:
         User_text = request.form.get("User_text")
         # Vector Search:
-        search_output_list = voyage_object.hybrid_search(query=User_text, top_k=3)
+        search_output_list = rag_data.hybrid_search(query=User_text, top_k=3)
         search_output = search_output_list.join()
         # Previous Conversations from the session_date:
         user_history = user_manager.session_data["user"]
@@ -106,22 +106,35 @@ def interact():
             Previous_conversation = [f"User: {user_history[i]} \nDiagnAI:{llm_history[i]}\n\n"]
         Previous_conversation = Previous_conversation.join()     
 
-    # Send in the pipeline:
-    prompt = rag_object.generate_response(
-                    rag_object.final_wrapper_prompt(f"{search_output}",
-                   f"{User_text}",
-                   f"{Previous_conversation}"))
+    # TODO: Dynamic Prompting
 
-    print(prompt)
+    # Selecting the model:
+    rag_object.gemini_model = rag_object.gemini_models[0]
+
+    # Send in the pipeline:
+    response = rag_object.generate_response_gemini(
+                    rag_object.final_wrapper_prompt(search_output,
+                        User_text,
+                        Previous_conversation))
+
+    print(response)
 
     # TODO – Parse the output:
+    parsed_data = response # placeholder for the parsed data from the llm, just to make it work for now
+
+    # TODO – Convert it into speech:
+    speech = "" # this is placeholder for the audio file
+
+    # Store these in session_id dictionary:
+    user_manager.session_data["user"].append(User_text)
+    user_manager.session_data["llm"].append(parsed_data)
 
     # Show through the text output:
     if 'user_id' not in session:
         flash('Please log in first.')
         return redirect(url_for('index'))
-    
-    return render_template('interact.html',response_text=prompt)
+
+    return render_template('interact.html',response_text=parsed_data, speech=speech)
 
 @app.route('/coming_soon')
 def coming_soon():
