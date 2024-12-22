@@ -9,8 +9,14 @@ import os
 from dotenv import load_dotenv
 
 
+template_dir = r'C:\Users\sufya\OneDrive\Desktop\DiagnAI\templates'
+static_dir = r'C:\Users\sufya\OneDrive\Desktop\DiagnAI\static'
 
-app = Flask(__name__)
+
+app = Flask(__name__,
+            template_folder=template_dir,
+            static_folder=static_dir)
+
 load_dotenv()
 app.config['SECRET_KEY'] = 'your_secret_key'
 

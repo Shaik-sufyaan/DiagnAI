@@ -19,9 +19,10 @@ import re
 from sklearn.preprocessing import normalize
 
 import google.generativeai as genai
+from dotenv import load_dotenv
 
 # Load environment variables from the .env file
-os.load_dotenv()
+load_dotenv()
 
 class Data_Handler:
     def __init__(self, voyage_api_key: str) -> None:
