@@ -1,0 +1,100 @@
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.new-chat-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #10a37f;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.new-chat-btn:hover {
+    background: #0e906f;
+}
+
+.conversations-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.conversation-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(250, 250, 250, 0.1);
+    transition: transform 0.2s;
+}
+
+.conversation-card:hover {
+    transform: translateY(-2px);
+}
+
+.conversation-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.conversation-header h3 {
+    flex-grow: 1;
+    margin: 0;
+    font-size: 16px;
+}
+
+.date {
+    font-size: 12px;
+    color: #666;
+}
+
+.conversation-preview {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.conversation-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.view-btn, .delete-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.view-btn {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.delete-btn {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.view-btn:hover {
+    background: #e0e0e0;
+}
+
+.delete-btn:hover {
+    background: #fecaca;
+}
