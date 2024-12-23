@@ -111,7 +111,7 @@ class User:
             cursor.close()
             conn.close()
 
-    def register_user_in_main_db(self, user_id, session_id):
+    def register_user_in_main_db(self, user_id):
         """Register user in the main database - keeping original structure"""
         conn = sqlite3.connect('Main.db')
         cursor = conn.cursor()
@@ -119,10 +119,10 @@ class User:
         try:
             cursor.execute(
                 "INSERT INTO USER_DATABASE (user_id, session_id) VALUES (?, ?)",
-                (user_id, session_id)
+                (user_id, self.session_data["session_id"])
             )
             conn.commit()
-            print(f"User {user_id} registered in main database with session {session_id}")
+            print(f"User {user_id} registered in main database with session {self.session_data["session_id"]}")
         except Exception as e:
             print(f"Error registering user in main database: {e}")
             conn.rollback()
@@ -130,7 +130,7 @@ class User:
             cursor.close()
             conn.close()
 
-    def extract_user_database(self, user_id, session_id):
+    def extract_user_database(self, user_id): # Columnwise Extract all the data fields
         conn = sqlite3.connect('Main.db')
         cursor = conn.cursor()
         
@@ -161,10 +161,37 @@ class User:
             for row in rows:
                 output2 += f"  {row[col_index]}, "[:-2] 
 
-        user_data = f"Previous Conversations: {output1}\n\n\n\n\n\n\n Health Data:{output2}"
+        user_data = f"Previous Conversations: {output1}\n\n\n Health Data:{output2}"
         return user_data
 
-    def create_user_specific_tables(self, user_id, session_id):
+    def add_to_table1(self, conversation_summary):
+        conn = sqlite3.connect('Main.db')
+        cursor = conn.cursor()
+        session_id = self.session_data["session_id"]
+        user_id = self.session_data["user_id"]
+        table_name = f"Table_{user_id}_conversations"
+
+        try:
+            # Assuming the table has columns `session_id` and `conversation_summary`
+            query = f"INSERT INTO {table_name} (session_id, conversation_summary) VALUES (?, ?)"
+            cursor.execute(query, (session_id, conversation_summary))
+            conn.commit()
+            print(f"Added to: {table_name}; \nThe Summary: {conversation_summary}")
+
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            raise e
+
+        finally:
+            # Ensure resources are cleaned up
+            conn.close()
+
+    # TODO: Implement the diagram into code:
+    def add_to_table2(self):
+        pass
+
+    def create_user_specific_tables(self, session_id):
+        user_id = self.session_data['user_id']
         """Create user-specific tables - keeping original structure"""
         conn = sqlite3.connect('Main.db')
         cursor = conn.cursor()
