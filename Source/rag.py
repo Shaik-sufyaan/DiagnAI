@@ -1,234 +1,232 @@
 import os
 from dotenv import load_dotenv
 # from typing import List, Dict, Any
-from langchain_community.document_loaders import PyPDFLoader
 # from sentence_transformers import SentenceTransformer
-# from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_voyageai import VoyageAIEmbeddings  # Updated import
 # import chromadb
-from chromadb import PersistentClient
 from chromadb.config import Settings
 from anthropic import Anthropic
 
+import re
+import torch
+import tiktoken
+import numpy as np
+from pathlib import Path
+from sklearn.preprocessing import normalize
 from typing import List, Dict, Any, Optional, Tuple
 from sentence_transformers import SentenceTransformer, util
-import torch
-import numpy as np
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from chromadb import PersistentClient
 from rank_bm25 import BM25Okapi
-import re
-from sklearn.preprocessing import normalize
 
 import google.generativeai as genai
 
 # Load environment variables from the .env file
 load_dotenv()
 
-class Data_Handler:
-    def __init__(self, voyage_api_key: str) -> None:
-        """Initialize VoyageAI embedding model."""
-        self.voyage_api_key = voyage_api_key
-        self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+class DataHandler:
+    """A class to handle document processing, embedding, and search operations."""
+
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2", chunk_size: int = 1000, chunk_overlap: int = 100) -> None:
+        """
+        Initialize the DataHandler with specified parameters.
+
+        Args:
+            model_name: Name of the sentence transformer model to use
+            chunk_size: Size of text chunks for splitting
+            chunk_overlap: Overlap between consecutive chunks
+        """
+        try:
+            self.embedding_model = SentenceTransformer(model_name)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load embedding model: {e}")
+
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=100,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             length_function=len,
             separators=["\n\n", "\n", " ", ""]
         )
-        self.text_chunks = []
-        self.chunk_embeddings = []
-        self.bm25 = None
-        self.tokenized_corpus = None
-        self.text_database_path = None
-        self.vector_database_path = None
-        self.collection_size = None
+
+        # Initialize empty containers
+        self.text_chunks: List[str] = []
+        self.chunk_embeddings: List[List[float]] = []
+        self.bm25: Optional[BM25Okapi] = None
+        self.tokenized_corpus: Optional[List[List[str]]] = None
+        self.collection = None
     
-    ################## TEXT DATABASE HANDLING ##################
-    def _get_all_pdf_recursive(self, directory):
-        all_files = []
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                if file.lower().endswith('.pdf') or file.lower().endswith('.txt'):
-                    all_files.append(os.path.join(root, file))
-        return all_files
-    
-    def _tokenize(self, text: str) -> List[str]:
-        """Simple tokenization function."""
-        # Convert to lowercase and split on non-alphanumeric characters
+    def _get_document_paths(self, directory: str | Path) -> List[Path]:
+        """
+        Recursively get all PDF and TXT files in a directory.
+
+        Args:
+            directory: Directory to search for documents
+
+        Returns:
+            List of Path objects for found documents
+        """
+        directory = Path(directory)
+        if not directory.exists():
+            raise FileNotFoundError(f"Directory {directory} does not exist")
+
+        return [
+            path for path in directory.rglob("*") 
+            if path.suffix.lower() in {'.pdf', '.txt'}
+        ]
+
+    @staticmethod
+    def _tokenize(text: str) -> List[str]:
+        """
+        Tokenize text into words.
+
+        Args:
+            text: Text to tokenize
+
+        Returns:
+            List of tokens
+        """
         return re.findall(r'\w+', text.lower())
-    
-    def _vectorize(self, texts: List[str]) -> List[List[float]]:
-        """Convert text chunks to embeddings using VoyageAI."""
-        embeddings = []
-        for chunk in texts:
-            embedding = self.embedding_model.encode(chunk)
-            embeddings.append(embedding)
-        self.chunk_embeddings = embeddings
-        return embeddings
-    
-    def document_load(self, text_database_path: str) -> List[List[float]]:
-        self.text_database_path = text_database_path
-        """Load and chunk PDF documents using LangChain's tools."""
-        pdf_paths = self._get_all_pdf_recursive(self.text_database_path)
+
+    def _compute_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """
+        Compute embeddings for a list of texts.
+
+        Args:
+            texts: List of texts to embed
+
+        Returns:
+            List of embedding vectors
+        """
+        try:
+            embeddings = [self.embedding_model.encode(chunk) for chunk in texts]
+            self.chunk_embeddings = embeddings
+            return embeddings
+        except Exception as e:
+            raise RuntimeError(f"Failed to compute embeddings: {e}")
+
+    def load_documents(self, directory: str | Path) -> List[str]:
+        """
+        Load and process documents from a directory.
+
+        Args:
+            directory: Directory containing documents
+
+        Returns:
+            List of processed text chunks
+        """
         chunks = []
-        for pdf_path in pdf_paths:
+        for doc_path in self._get_document_paths(directory):
             try:
-                loader = PyPDFLoader(pdf_path)
-                pages = loader.load()
-                for page in pages:
-                    page_chunks = self.text_splitter.split_text(page.page_content)
-                    chunks.extend(page_chunks)
+                if doc_path.suffix.lower() == '.pdf':
+                    loader = PyPDFLoader(str(doc_path))
+                    pages = loader.load()
+                    for page in pages:
+                        page_chunks = self.text_splitter.split_text(page.page_content)
+                        chunks.extend(page_chunks)
+                else:  # .txt files
+                    text = doc_path.read_text(encoding='utf-8')
+                    text_chunks = self.text_splitter.split_text(text)
+                    chunks.extend(text_chunks)
             except Exception as e:
-                print(f"Error loading {pdf_path}: {e}")
-        
+                print(f"Error processing {doc_path}: {e}")
+                continue
+
         self.text_chunks = chunks
-        self.vector_chunks = self._vectorize(self.text_chunks)
-        # Initialize BM25 for lexical search
+        print(f"Loaded {len(self.text_chunks)} text chunks.")
+
+        self.chunk_embeddings = self._compute_embeddings(chunks)
+        print(f"Computed {len(self.chunk_embeddings)} embeddings.")
+
         self.tokenized_corpus = [self._tokenize(chunk) for chunk in chunks]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
+        print("BM25 initialized successfully.")
+
         return chunks
-    
-    ################## VECTOR DATABASE HANDLING ##################
-    def create_vector_db(self, persistant_directory, collection_name="MedDB"):
-        """Initialize ChromaDB with persistence using PersistentClient."""
-        self.vector_database_path = persistant_directory
-        # Ensure the directory exists or create it
-        if not os.path.exists(self.vector_database_path):
-            os.makedirs(self.vector_database_path)
-            print(f"Directory '{self.vector_database_path}' created.")
-        
-        # Initialize PersistentClient with the vector_database_path
-        self.client = PersistentClient(path=self.vector_database_path)
-        self.collection_name = collection_name
-        # self.collection = self.create_vector_db()  # Ensure collection initialization
-        
-        """Create or get an existing collection for vector storage."""
-        print(f"Creating or accessing collection '{self.collection_name}'")
-        self.collection_size = self.client.get_collection(f"{self.collection_name}").count()
-        return self.client.get_or_create_collection(name=self.collection_name)
 
-    def append(self, embedding: List[float], doc_id: str, metadata: Dict = None) -> None:
-            """Append new embedding with document ID to the collection."""
-            if not hasattr(self, 'collection') or self.collection is None:
-                raise ValueError("Collection not initialized. Please run create_vector_db first.")
-            
-            # Convert embedding to list if it's not already
-            if not isinstance(embedding, list):
-                embedding = embedding.tolist()
+    def initialize_vector_db(self, directory: str | Path, collection_name: str = "MedDB") -> None:
+        """
+        Initialize or connect to a vector database.
 
+        Args:
+            directory: Directory for persistent storage
+            collection_name: Name of the collection
+        """
+        directory = Path(directory)
+        directory.mkdir(parents=True, exist_ok=True)
+
+        try:
+            client = PersistentClient(path=str(directory))
+            self.collection = client.get_or_create_collection(name=collection_name)
+            print("Vector database initialized successfully.")
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize vector database: {e}")
+
+    def add_to_vector_db(self, embedding: List[float], doc_id: str, metadata: Optional[Dict] = None) -> None:
+        """
+        Add a document embedding to the vector database.
+
+        Args:
+            embedding: Document embedding
+            doc_id: Unique document identifier
+            metadata: Optional metadata for the document
+        """
+        if self.collection is None:
+            raise ValueError("Vector database not initialized")
+
+        try:
             self.collection.add(
-                embeddings=[embedding],
+                embeddings=[embedding if isinstance(embedding, list) else embedding.tolist()],
                 ids=[doc_id],
                 metadatas=[metadata] if metadata else None
             )
+        except Exception as e:
+            raise RuntimeError(f"Failed to add embedding to database: {e}")
 
-    def hybrid_search(self, 
-                     query: str, 
-                     top_k: int = 3, 
-                     semantic_weight: float = 0.7
-                     ) -> List[Dict[str, any]]:
+    def hybrid_search(self, query: str, top_k: int = 3, semantic_weight: float = 0.5) -> List[Dict[str, Any]]:
         """
-        Hybrid search combining semantic and lexical search.
+        Perform hybrid semantic and lexical search.
+
         Args:
-            query: Text query to search for
+            query: Search query
             top_k: Number of results to return
-            semantic_weight: Weight given to semantic search (0-1)
-                           1.0 = pure semantic search
-                           0.0 = pure lexical search
+            semantic_weight: Weight for semantic search (0-1)
+
+        Returns:
+            List of search results with scores
         """
         if not self.text_chunks or not self.chunk_embeddings:
-            raise ValueError("No text chunks or embeddings found. Please load documents first.")
+            raise ValueError("No documents loaded")
 
-        # 1. Semantic Search
+        # Semantic search
         query_embedding = self.embedding_model.encode(query)
         semantic_similarities = util.pytorch_cos_sim(
             torch.tensor(query_embedding), 
-            torch.tensor(self.chunk_embeddings)
-        )[0]
-        
-        # 2. Lexical Search (BM25)
-        tokenized_query = self._tokenize(query)
-        bm25_scores = np.array(self.bm25.get_scores(tokenized_query))
-        
+            torch.tensor(np.array(self.chunk_embeddings))
+        )[0].numpy()
+
+        # Lexical search
+        bm25_scores = np.array(self.bm25.get_scores(self._tokenize(query)))
+
         # Normalize scores
-        semantic_scores = semantic_similarities.numpy()
-        semantic_scores = (semantic_scores - semantic_scores.min()) / (semantic_scores.max() - semantic_scores.min() + 1e-6)
+        semantic_scores = (semantic_similarities - semantic_similarities.min()) / (semantic_similarities.max() - semantic_similarities.min() + 1e-6)
         bm25_scores = (bm25_scores - bm25_scores.min()) / (bm25_scores.max() - bm25_scores.min() + 1e-6)
-        
+
         # Combine scores
-        combined_scores = (semantic_weight * semantic_scores + 
-                         (1 - semantic_weight) * bm25_scores)
-        
+        combined_scores = (semantic_weight * semantic_scores + (1 - semantic_weight) * bm25_scores)
+
         # Get top results
         top_indices = np.argsort(combined_scores)[-top_k:][::-1]
-        
-        results = []
-        for idx in top_indices:
-            results.append({
-                "text": self.text_chunks[idx],
-                "similarity_score": float(combined_scores[idx]),
-                "semantic_score": float(semantic_scores[idx]),
-                "lexical_score": float(bm25_scores[idx])
-            })
-        
+
+        results = [{
+            "text": self.text_chunks[idx],
+            "combined_score": float(combined_scores[idx]),
+            "semantic_score": float(semantic_scores[idx]),
+            "lexical_score": float(bm25_scores[idx])
+        } for idx in top_indices]
+
+        print("Search Results:", results)
         return results
 
-    def semantic_search(self, query_embedding: List[float], n_results: int = 3) -> List[Dict[str, Any]]:
-        """Perform semantic search using query embedding."""
-        if not hasattr(self, 'collection') or self.collection is None:
-            raise ValueError("Collection not initialized. Please run create_vector_db first.")
-        
-        # Convert query_embedding to list if it's not already
-        if not isinstance(query_embedding, list):
-            query_embedding = query_embedding.tolist()
-
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results,
-            include=["embeddings", "distances", "metadatas"]
-        )
-        return results
-    
-
-    ################## VECTORS TO TEXT ##################
-    def embedding_to_text(self, 
-                         embedding: np.ndarray, 
-                         top_k: int = 1, 
-                         similarity_threshold: float = 0.5,
-                         use_hybrid: bool = True
-                         ) -> List[Dict[str, any]]:
-        """
-        Convert an embedding vector to the most similar text(s).
-        Args:
-            embedding: The embedding vector
-            top_k: Number of results to return
-            similarity_threshold: Minimum similarity score
-            use_hybrid: Whether to use hybrid search (requires original query)
-        """
-        if use_hybrid:
-            print("Warning: Hybrid search requires original query text. Falling back to semantic search.")
-        
-        # Using semantic search only for direct embedding matching
-        similarities = util.pytorch_cos_sim(
-            torch.tensor(embedding), 
-            torch.tensor(self.chunk_embeddings)
-        )[0]
-        
-        # Get top results
-        top_k_values, top_k_indices = torch.topk(similarities, min(top_k, len(self.text_chunks)))
-        
-        results = []
-        for score, idx in zip(top_k_values, top_k_indices):
-            if score >= similarity_threshold:
-                results.append({
-                    "text": self.text_chunks[idx],
-                    "similarity_score": float(score)
-                })
-        if not results[0]:
-            return ["Results from the medical corpus = Not really sure!"]
-        
-        return results
-    
 class RAG:
     def __init__(self, api_key: str) -> None:
         """Initialize RAG system with Anthropic API."""
@@ -241,7 +239,6 @@ class RAG:
         self.claude_models = ["claude-3-5-sonnet-20241022"]
         self.gemini_models = ["gemini-1.5-flash", "gemini-pro"]
     
-
     def final_wrapper_prompt(self, context: str, query: str, conversation_history: str="", user_tonality: str="") -> str:
         return f"""You are an AI assistant designed to engage in friendly, emotionally expressive conversations with users while subtly assessing their health condition. Your primary goal is to be a supportive friend while gently steering the conversation towards health-related topics when appropriate.
 
@@ -377,6 +374,58 @@ class RAG:
             print(f"Error generating response: {str(e)}")
             return "Completion"
 
+    def summarizing_prompt(self, text_to_be_summarized: str) -> str:
+        return f"""You are a summarizing bot. You are given a task to summarize a conversation between a user and an AI friend. 
+        The AI friend is supposed to help the human user in any health aspect it possibly can. 
+        If instead you were the friend of this user, what information would you have included in the summary to be remembered later? 
+        Include those pieces of information in the summary! Do not cross the limit of 1500 words per summary!
+        Here's the conversation <<<{text_to_be_summarized}>>>"""
+
+    def count_tokens(self, input_text: str, encoding_name="cl100k_base"):
+        """Counts the number of tokens in a given text using a specified encoding.
+
+        Args:
+            text: The input text string.
+            encoding_name: The name of the encoding to use (e.g., "cl100k_base", "p50k_base", "r50k_base").
+                Defaults to "cl100k_base", which is used by models like `gpt-3.5-turbo` and `gpt-4`.
+
+        Returns:
+            The number of tokens in the text, or None if an error occurs (e.g., invalid encoding name).
+        """
+
+        try:
+            encoding = tiktoken.get_encoding(encoding_name)
+            num_tokens = len(encoding.encode(input_text))
+            return num_tokens
+        except KeyError:
+            print(f"Error: Invalid encoding name: {encoding_name}")
+            return None
+        except Exception as e: # Catching other potential exceptions
+            print(f"An error occurred: {e}")
+            return None
+
+    def conversations_summarizer(self, user: list[str], llm: list[str], token_limit = 10000) -> str:
+        # we have to join them like this: 
+        temp = []
+        for i, j in user, llm:
+            temp.append(f"User : {i}\n")
+            temp.append(f"DiagnAI : {j}\n")
+
+        combined_conversation = "".join(temp)
+        prompt = self.summarizing_prompt(combined_conversation)
+        n_tokens = self.count_tokens(prompt)
+        
+        if (n_tokens < token_limit):
+            genai.configure(api_key=self.api_key)
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(combined_conversation)
+            print(response.text)
+            return response
+
+        elif (n_tokens > token_limit):
+            return "Token Limit Reached! Conversation too big to summarize"
+
+
     def generate_response_gemini(self, prompt: str) -> str:
         genai.configure(api_key=self.api_key)
         model = genai.GenerativeModel("gemini-1.5-flash")
@@ -384,3 +433,20 @@ class RAG:
         print(response.text)
         return response
     
+
+### TESTING:
+# Initialize the handler
+handler = DataHandler()
+
+# Load documents
+chunks = handler.load_documents("/Users/varunahlawat/DiagnAI_December/DiagnAI/DataCorpus")
+
+# Initialize vector database
+handler.initialize_vector_db("TRY_DB", "OMFG")
+
+# Perform searches
+try:
+    results = handler.hybrid_search("Health", top_k=1)
+except Exception as e:
+    print(f"Error during search: {e}")
+

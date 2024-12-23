@@ -29,7 +29,7 @@ def get_api_key():
         return jsonify({'error': 'Unauthorized'}), 401
     
     # Retrieve the API key from environment variables
-    api_key = os.getenv('G_API_KEY')
+    api_key = os.getenv('GEMINI_API_KEY')
     if not api_key:
         return jsonify({'error': 'API key not configured'}), 500
     
@@ -77,6 +77,8 @@ def login():
     if user and check_password_hash(user['password'], password):
         # Create session dictionary immediately upon successful login
         session_data_login = user_manager.create_session(user)
+        print("\n\n\n\n\nSESSION IS CREATED SUCCESSFULLY\n\n\n")
+        print(user_manager.session_data)
         flash(f"Welcome {user['name']}! Session started.")
         return redirect(url_for('coming_soon', session_id=session_data_login["session_id"]))
     else:
@@ -95,6 +97,7 @@ def interact():
     if request.method == 'POST':
         # User's text input:
         User_text = request.form.get("User_text")
+        print(f"Text recieved: {User_text}")
         # Vector Search:
         search_output_list = rag_data.hybrid_search(query=User_text, top_k=3)
         search_output = search_output_list.join()
@@ -105,7 +108,7 @@ def interact():
         length = len(llm_history)
         for i in range(0,length):
             Previous_conversation = [f"User: {user_history[i]} \nDiagnAI:{llm_history[i]}\n\n"]
-        Previous_conversation = Previous_conversation.join()     
+        Previous_conversation = Previous_conversation.join()
 
     # TODO: Dynamic Prompting
 
@@ -136,6 +139,19 @@ def interact():
         return redirect(url_for('index'))
 
     return render_template('interact.html',response_text=parsed_data, speech=speech)
+
+
+@app.route('/session-end', methods=['POST'])
+def session_end():
+    # Handle the session end event here
+    rag_object = r.RAG(os.getenv("GEMINI_API_KEY"))
+    summary = rag_object.conversations_summarizer(user_manager.session_data["user"], user_manager.session_data["llm"])
+    
+    User.add_to_table1(summary)
+
+    print("User session ended")
+    return '', 204
+
 
 @app.route('/coming_soon')
 def coming_soon():

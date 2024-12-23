@@ -16,7 +16,7 @@ def main():
     #case_study_path = "../DataCorpus/Case Study/"
     case_study_path = r"C:\Users\sufya\OneDrive\Desktop\DiagnAI\DataCorpus\Case study"
 
-# Get all PDF files in the directory
+    # Get all PDF files in the directory
     pdf_files = [os.path.join(case_study_path, f) for f in os.listdir(case_study_path) if f.endswith('.pdf')]
 
     #pdf_files = [os.path.join(case_study_path, f) for f in os.listdir(case_study_path) if f.endswith('.pdf')]
@@ -84,60 +84,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-## WORKS !
-# import rag as r
-# import os
-# from dotenv import load_dotenv
-
-# # Load environment variables from the .env file
-# load_dotenv()
-
-
-# # Adjusted main function
-# def main():
-#     voyage_api = os.getenv("VOYAGE_API_KEY")
-#     print(voyage_api)
-
-#     # Initialize embedding and vectorization
-#     Voyage = r.VoyageEmbedding(voyage_api)
-    
-#     # Load all PDF files from the "Case Study" directory
-#     case_study_path = "../DataCorpus/Case Study/"
-#     pdf_files = [os.path.join(case_study_path, f) for f in os.listdir(case_study_path) if f.endswith('.pdf')]
-    
-#     text_chunks = Voyage.document_load(pdf_paths=pdf_files)
-#     print(f"Text Chunks:\n{text_chunks}\n")
-
-#     if not text_chunks:
-#         print("No text chunks generated; check the file path or content.")
-#         return
-
-#     vector_chunks = Voyage.vectorize(text_chunks)
-#     print(f"Vectorized Chunks:\n{vector_chunks}\n")
-
-#     if not vector_chunks:
-#         print("No vectorized chunks; vectorization failed or no content to vectorize.")
-#         return
-
-#     # Set up ChromaDB for persistent storage
-#     persist_directory = "./VectorDB"
-#     if not os.path.exists(persist_directory):
-#         print("VectorDB directory doesn't exist; creating it now...")
-
-#     # Initialize VectorDB and append vectorized data
-#     Med_DB = r.VectorDB(persist_directory=persist_directory)
-
-#     for idx, vector in enumerate(vector_chunks):
-#         doc_id = f"doc_{idx}"
-#         Med_DB.append(embedding=vector, doc_id=doc_id)
-
-#     # Perform semantic search with an example query embedding
-#     query_embedding = vector_chunks[0]
-#     # search_results = Med_DB.semantic_search(query_embedding=query_embedding)
-#     search_results = Med_DB.semantic_search(query_embedding="Depression")
-#     print("Search Results:\n", search_results)
-    
-
-# if __name__ == "__main__":
-#     main()
