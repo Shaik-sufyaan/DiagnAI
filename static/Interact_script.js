@@ -1,14 +1,40 @@
-require('dotenv').config();
-
 const typingForm = document.querySelector(".typing-form");
 const chatList = document.querySelector(".chat-list");
 let userMessage = null;
+let API_URL = ""; // Dynamically set later
 
 
-const YOUR_API_KEY = process.env.G_API_KEY;
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${YOUR_API_KEY}`;
+// Fetch API key securely from Flask backend
+const fetchApiKey = async () => {
+    try {
+        const response = await fetch('/get_api_key');
+        const data = await response.json();
+        if (data.api_key) {
+            return data.api_key;
+        } else {
+            console.error("API key not returned:", data.error);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error fetching API key:", error);
+        return null;
+    }
+};
 
-console.log(API_URL);
+// Initialize API URL dynamically
+const initializeApiUrl = async () => {
+    const apiKey = await fetchApiKey();
+    if (apiKey) {
+        API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        console.log("API URL initialized:", API_URL);
+    } else {
+        console.error("Failed to fetch API key");
+    }
+};
+
+// Call the function to initialize the API URL when the page loads
+initializeApiUrl();
+
 
 // Create a new message element and return it
 const createMessageElement = (content, className) => {
@@ -19,6 +45,7 @@ const createMessageElement = (content, className) => {
 };
 
 // Fetch response from the API based on the user's message
+// Update the generateAPIResponse function
 const generateAPIResponse = async (incomingMessageDiv) => {
     const textElement = incomingMessageDiv.querySelector(".text");
 
@@ -29,7 +56,6 @@ const generateAPIResponse = async (incomingMessageDiv) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                // Updated request format for Gemini
                 contents: [{
                     role: "user",
                     parts: [{
@@ -50,12 +76,12 @@ const generateAPIResponse = async (incomingMessageDiv) => {
         }
 
         const data = await response.json();
-        console.log('API Response:', data); // For debugging
-
-        // Updated response parsing for Gemini
+        
         if (data.candidates && data.candidates[0] && data.candidates[0].content) {
             const apiResponse = data.candidates[0].content.parts[0].text;
-            textElement.innerText = apiResponse || "No response text received.";
+            textElement.innerHTML = ''; // Clear the "Thinking..." text
+            await typeText(textElement, apiResponse);
+            scrollToBottom(chatList);
         } else {
             textElement.innerText = "Received unexpected response format from API.";
             console.error('Unexpected response structure:', data);
@@ -84,6 +110,7 @@ const showLoadingAnimation = () => {
 };
 
 // Handle outgoing chat message
+// Update the handleOutgoingChat function
 const handleOutgoingChat = () => {
     userMessage = typingForm.querySelector(".typing-input").value.trim();
     if (!userMessage) return;
@@ -97,6 +124,7 @@ const handleOutgoingChat = () => {
     
     const outgoingMessageDiv = createMessageElement(html, "outgoing");
     chatList.appendChild(outgoingMessageDiv);
+    scrollToBottom(chatList);
 
     typingForm.querySelector(".typing-input").value = "";
     showLoadingAnimation();
@@ -137,6 +165,51 @@ const testAPIConnection = async () => {
         console.error('API Test Error:', error);
     }
 };
+
+// Add these utility functions at the top of your script
+const typeText = async (element, text, speed = 25) => {
+    element.innerHTML = '';
+    let index = 0;
+    
+    return new Promise((resolve) => {
+        function addCharacter() {
+            if (index < text.length) {
+                element.innerHTML += text.charAt(index);
+                index++;
+                setTimeout(addCharacter, speed);
+            } else {
+                resolve();
+            }
+        }
+        addCharacter();
+    });
+};
+
+const scrollToBottom = (element, smooth = true) => {
+    const options = {
+        top: element.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto'
+    };
+    element.scrollTo(options);
+};
+
+// Add styles to maintain smooth animations
+const styleSheet = document.createElement("style");
+document.head.appendChild(styleSheet);
+
+// suggestion list
+document.querySelectorAll('.suggestion').forEach(suggestion => {
+    suggestion.addEventListener('click', () => {
+        const text = suggestion.querySelector('.text').textContent;
+        const inputField = document.querySelector('.typing-input');
+        inputField.value = text;
+        
+        // Optional: Automatically submit the suggestion
+        const form = document.querySelector('.typing-form');
+        form.dispatchEvent(new Event('submit'));
+    });
+});
+
 
 // Test the API connection when the page loads
 testAPIConnection();

@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from Databases import User
 
@@ -8,15 +8,10 @@ import rag as r
 import os
 from dotenv import load_dotenv
 
-template_dir = r'C:\Users\sufya\OneDrive\Desktop\DiagnAI\templates'
-static_dir = r'C:\Users\sufya\OneDrive\Desktop\DiagnAI\static'
+temp_dir = rf"{os.getenv("Template_path")}"
+static_dir = rf"{os.getenv("Static_path")}"
 
-
-app = Flask(__name__,
-            template_folder=template_dir,
-            static_folder=static_dir)
-
-
+app = Flask(__name__, template_folder=temp_dir, static_folder=static_dir)
 load_dotenv()
 app.config['SECRET_KEY'] = 'your_secret_key'
 
@@ -27,6 +22,19 @@ user_manager = User()
 def index():
     return render_template('index.html')
 
+@app.route('/get_api_key', methods=['GET'])
+def get_api_key():
+    # Only return the API key if the user is logged in
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Retrieve the API key from environment variables
+    api_key = os.getenv('G_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'API key not configured'}), 500
+    
+    return jsonify({'api_key': api_key})
+    
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -78,8 +86,8 @@ def login():
 @app.route('/interact', methods=['GET', 'POST'])
 def interact():
     # Initializing Rag & Embedding Space Objects:
-    rag_object = r.RAG(os.getenv("CLAUDE_KEY"))
-    voyage_object = r.VoyageEmbedding(os.getenv("VOYAGE_API_KEY"))
+    rag_object = r.RAG(os.getenv("GEMINI_API_KEY"))
+    rag_data = r.Data_Handler(os.getenv("VOYAGE_API_KEY"))
     # Initilizing the string variables:
     User_text, search_output, Previous_conversation = "", "", ""
 
@@ -88,7 +96,7 @@ def interact():
         # User's text input:
         User_text = request.form.get("User_text")
         # Vector Search:
-        search_output_list = voyage_object.hybrid_search(query=User_text, top_k=3)
+        search_output_list = rag_data.hybrid_search(query=User_text, top_k=3)
         search_output = search_output_list.join()
         # Previous Conversations from the session_date:
         user_history = user_manager.session_data["user"]
@@ -99,21 +107,26 @@ def interact():
             Previous_conversation = [f"User: {user_history[i]} \nDiagnAI:{llm_history[i]}\n\n"]
         Previous_conversation = Previous_conversation.join()     
 
+    # TODO: Dynamic Prompting
+
+    # Selecting the model:
+    rag_object.gemini_model = rag_object.gemini_models[0]
+
     # Send in the pipeline:
-    response = rag_object.generate_response(
-                    rag_object.final_wrapper_prompt(f"{search_output}",
-                   f"{User_text}",
-                   f"{Previous_conversation}"))
+    response = rag_object.generate_response_gemini(
+                    rag_object.final_wrapper_prompt(search_output,
+                        User_text,
+                        Previous_conversation))
 
     print(response)
 
     # TODO – Parse the output:
-    parsed_data = "" # placeholder for the parsed data from the llm
+    parsed_data = response # placeholder for the parsed data from the llm, just to make it work for now
 
     # TODO – Convert it into speech:
     speech = "" # this is placeholder for the audio file
 
-    # TODO – Store these in session_id dictionary:
+    # Store these in session_id dictionary:
     user_manager.session_data["user"].append(User_text)
     user_manager.session_data["llm"].append(parsed_data)
 
@@ -133,3 +146,4 @@ def coming_soon():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    

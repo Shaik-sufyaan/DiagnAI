@@ -42,7 +42,8 @@ pip install -r requirements.txt
 - Create a file called `.env`, paste API keys for:
   - Anthropic : `CLAUDE_KEY = "sk-a...`
   - VoyageAI : `VOYAGE_API_KEY = "pa-a...` 
-
+  - Path to the templates folder : `Template_path = "/Users/varun...` 
+  - Path to the static folder : `Static_path = "/Users/varun`
 
 
 # Execution:
