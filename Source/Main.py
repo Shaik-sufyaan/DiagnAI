@@ -8,9 +8,10 @@ import rag as r
 import os
 from dotenv import load_dotenv
 
+temp_dir = rf"{os.getenv("Template_path")}"
+static_dir = rf"{os.getenv("Static_path")}"
 
-
-app = Flask(__name__)
+app = Flask(__name__, template_folder=temp_dir, static_folder=static_dir)
 load_dotenv()
 app.config['SECRET_KEY'] = 'your_secret_key'
 

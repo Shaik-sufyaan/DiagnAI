@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 # from typing import List, Dict, Any
 from langchain_community.document_loaders import PyPDFLoader
 # from sentence_transformers import SentenceTransformer
@@ -21,7 +22,7 @@ from sklearn.preprocessing import normalize
 import google.generativeai as genai
 
 # Load environment variables from the .env file
-os.load_dotenv()
+load_dotenv()
 
 class Data_Handler:
     def __init__(self, voyage_api_key: str) -> None:
