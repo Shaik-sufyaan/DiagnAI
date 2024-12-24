@@ -45,6 +45,9 @@ pip install -r requirements.txt
   - Path to the templates folder : `Template_path = "/Users/varun...` 
   - Path to the static folder : `Static_path = "/Users/varun`
 
+<u>Note (For MacOS users)::</u><br>
+If installing pyaudio gives an error then run `brew install portaudio`(make sure your DiagnAI virtual environment is active during this).
+Then try `pip install pyaudio` again and it should work.
 
 # Execution:
 ### Overall Pipeline:
@@ -61,11 +64,24 @@ Medically accurate corpus of data, focused on the real world medical practices. 
 - The voice will mimic the real therapist(we will need to speak with doctors for it<personal_question>).
 
 ### Performance Evaluation:
-- RAG evaluation library: giskard
+- RAG evaluation libraries: giskard and ragas
 - In our RAG evaluation we want to get a good analagous idea of false negatives and false positive cases.
+
+### SPEECH TO SPEECH functionality using Google Cloud Text-to-speech API:
+Estimation of inference time for audio generation are the following:
+**__Short Sentences (a few words):__**
+- Standard Voices: ~200-600 milliseconds
+- Neural Voices: ~500-1000 milliseconds
+**__Medium Sentences (a few sentences):__**
+- Standard Voices: ~500 milliseconds - 2 seconds
+- Neural Voices: ~1-3 seconds
+__**Long Sentences (a paragraph or more):**__
+- Standard Voices: ~1-5 seconds
+- Neural Voices: ~2-10+ seconds
 
 ### Front End:
 - Default Streamlit template.
+
 ### Backend & User Database:
 - A common table for User's information
 - Individual tables for each user.
@@ -76,7 +92,7 @@ Medically accurate corpus of data, focused on the real world medical practices. 
 
 <hr>
 
-### Scope:
+## Scope of DiagnAI:
 - Real-time photorealistic face generation with facial expressions.
 - Multimodal Diagnosis with all sorts of clinical medical reports:
   - Vital Signs

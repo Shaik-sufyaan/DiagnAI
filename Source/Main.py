@@ -89,7 +89,7 @@ def login():
 def interact():
     # Initializing Rag & Embedding Space Objects:
     rag_object = r.RAG(os.getenv("GEMINI_API_KEY"))
-    rag_data = r.Data_Handler(os.getenv("VOYAGE_API_KEY"))
+    rag_data = r.DataHandler(os.getenv("VOYAGE_API_KEY"))
     # Initilizing the string variables:
     User_text, search_output, Previous_conversation = "", "", ""
 

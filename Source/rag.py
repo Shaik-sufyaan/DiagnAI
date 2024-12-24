@@ -425,7 +425,6 @@ class RAG:
         elif (n_tokens > token_limit):
             return "Token Limit Reached! Conversation too big to summarize"
 
-
     def generate_response_gemini(self, prompt: str) -> str:
         genai.configure(api_key=self.api_key)
         model = genai.GenerativeModel("gemini-1.5-flash")
@@ -435,18 +434,21 @@ class RAG:
     
 
 ### TESTING:
-# Initialize the handler
-handler = DataHandler()
+def test():
+    # Initialize the handler
+    handler = DataHandler()
 
-# Load documents
-chunks = handler.load_documents("/Users/varunahlawat/DiagnAI_December/DiagnAI/DataCorpus")
+    # Load documents
+    chunks = handler.load_documents("/Users/varunahlawat/DiagnAI_December/DiagnAI/DataCorpus")
 
-# Initialize vector database
-handler.initialize_vector_db("TRY_DB", "OMFG")
+    # Initialize vector database
+    handler.initialize_vector_db("TRY_DB", "OMFG")
 
-# Perform searches
-try:
-    results = handler.hybrid_search("Health", top_k=1)
-except Exception as e:
-    print(f"Error during search: {e}")
+    # Perform searches
+    try:
+        results = handler.hybrid_search("Health", top_k=1)
+    except Exception as e:
+        print(f"Error during search: {e}")
 
+if __name__=="__main__":
+    test()
