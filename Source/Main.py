@@ -160,6 +160,12 @@ def coming_soon():
         return redirect(url_for('index'))
     return render_template('coming_soon.html')
 
+#returning session_id for js
+@app.route('/get_session_id')
+def get_session_id():
+    return jsonify({'session_id': session['session_id']})
+
+
 if __name__ == '__main__':
     app.run(debug=True)
     
