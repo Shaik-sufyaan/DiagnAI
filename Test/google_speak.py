@@ -3,7 +3,7 @@ import os
 from google.cloud import texttospeech
 from google.auth import credentials
 import pygame
-
+import io
 load_dotenv()
 
 def speak(text, speaker="en-US-Wavenet-C", emotion="neutral"):
