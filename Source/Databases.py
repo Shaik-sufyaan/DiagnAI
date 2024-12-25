@@ -111,7 +111,7 @@ class User:
             cursor.close()
             conn.close()
 
-    def register_user_in_main_db(self, user_id):
+    def register_user_in_main_db(self, user_id, session_id):
         """Register user in the main database - keeping original structure"""
         conn = sqlite3.connect('Main.db')
         cursor = conn.cursor()
@@ -190,7 +190,7 @@ class User:
     def add_to_table2(self):
         pass
 
-    def create_user_specific_tables(self, session_id):
+    def create_user_specific_tables(self, user_id, session_id):
         user_id = self.session_data['user_id']
         """Create user-specific tables - keeping original structure"""
         conn = sqlite3.connect('Main.db')

@@ -13,3 +13,9 @@ loginBtn.addEventListener('click', () => {
 window.addEventListener("beforeunload", function () {
     navigator.sendBeacon("/session-end");
 });
+
+function handleGoogleLogin() {
+    console.log('Google login button clicked');
+    // For Flask template
+    window.location.href = '/google-login';
+}

@@ -22,13 +22,13 @@
         <div class="form-container sign-up login">
             <form action="{{ url_for('register') }}" method="POST">
                 <h1>Create Account</h1>
-                <div class="social-icons">
-                    <a href="#" class="icon"><i class="fa-brands fa-google-plus-g"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-github"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-linkedin-in"></i></a>
+                <button type="button" class="google-btn" onclick="handleGoogleLogin()">
+                    <i class="fa-brands fa-google"></i>
+                    Continue with Google
+                </button>
+                <div class="divider">
+                    <span>or use your email for registration</span>
                 </div>
-                <span>or use your email for registration</span>
                 <input type="text" name="name" placeholder="Name" required>
                 <input type="email" name="email" placeholder="Email" required>
                 <input type="password" name="password" placeholder="Password" required>
@@ -39,19 +39,21 @@
         <div class="form-container sign-in login">
             <form action="{{ url_for('login') }}" method="POST">
                 <h1>Sign In</h1>
-                <div class="social-icons">
-                    <a href="#" class="icon"><i class="fa-brands fa-google-plus-g"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-github"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-linkedin-in"></i></a>
+                <button type="button" class="google-btn" onclick="handleGoogleLogin()">
+                    <i class="fa-brands fa-google"></i>
+                    Continue with Google
+                </button>
+                <div class="divider">
+                    <span>or use your email to sign in</span>
                 </div>
-                <span>or use your email password</span>
                 <input type="email" name="email" placeholder="Email" required>
                 <input type="password" name="password" placeholder="Password" required>
                 <a href="#">Forget Your Password?</a>
                 <button type="submit">Sign In</button>
             </form>
         </div>
+        
+        <!-- Toggle container remains the same -->
         <div class="toggle-container">
             <div class="toggle">
                 <div class="toggle-panel toggle-left">
@@ -71,4 +73,3 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
-

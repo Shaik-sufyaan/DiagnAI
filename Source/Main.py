@@ -1,19 +1,34 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from Databases import User
-
+import pathlib
 # RAG dependencies
 import rag as r
 import os
 from dotenv import load_dotenv
-
+from google_auth_oauthlib.flow import Flow
+import google.auth.transport.requests
+from google.oauth2 import id_token
+import cachecontrol
+import requests
 temp_dir = rf"{os.getenv("Template_path")}"
 static_dir = rf"{os.getenv("Static_path")}"
 
 app = Flask(__name__, template_folder=temp_dir, static_folder=static_dir)
 load_dotenv()
 app.config['SECRET_KEY'] = 'your_secret_key'
+
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+GOOGlE_CLIENT_ID ="630208405598-hfueo2pvkqrdq5niiomlttpndgg3v87h.apps.googleusercontent.com"
+
+client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
+
+flow = Flow.from_client_secrets_file(
+    client_secrets_file=client_secrets_file,
+    scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email","openid"],
+    redirect_uri="http://127.0.0.1:5000/callback")
 
 # Initialize User class
 user_manager = User()
@@ -152,6 +167,52 @@ def session_end():
     print("User session ended")
     return '', 204
 
+@app.route('/google-login')
+def google_login():
+    auth_url, state = flow.authorization_url()
+    session["state"] = state
+    return redirect(auth_url)
+
+@app.route('/callback')
+def callback():
+    try:
+        flow.fetch_token(authorization_response=request.url)
+        credentials = flow.credentials
+        
+        request_session = requests.Session()
+        cached_session = cachecontrol.CacheControl(request_session)
+        token_request = google.auth.transport.requests.Request(session=cached_session)
+
+        id_info = id_token.verify_oauth2_token(
+            id_token=credentials.id_token,
+            request=token_request,
+            audience=GOOGlE_CLIENT_ID
+        )
+
+        email = id_info.get("email")
+        name = id_info.get("name")
+        
+        # Check if user exists
+        user = user_manager.get_user_by_email(email)
+        if not user:
+            # Create dummy password hash for Google users
+            google_password = generate_password_hash(f"google_{id_info['sub']}")
+            user = user_manager.create_user(name, email, google_password)
+        
+        session_data = user_manager.create_session(user)
+        user_manager.register_user_in_main_db(user['id'], session_data["session_id"])
+        user_manager.create_user_specific_tables(user['id'], session_data["session_id"])
+        
+        session["google_id"] = id_info.get("sub")
+        session["name"] = name
+        session["user_id"] = user['id']
+        session["session_id"] = session_data["session_id"]
+        
+        return redirect(url_for('coming_soon', session_id=session_data["session_id"]))
+        
+    except Exception as e:
+        print(f"Auth error: {str(e)}")
+        return abort(500, str(e))
 
 @app.route('/coming_soon')
 def coming_soon():
