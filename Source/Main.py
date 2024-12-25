@@ -21,7 +21,7 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-GOOGlE_CLIENT_ID ="630208405598-hfueo2pvkqrdq5niiomlttpndgg3v87h.apps.googleusercontent.com"
+GOOGlE_CLIENT_ID = os.getenv("google_client_id")
 
 client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
 
